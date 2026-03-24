@@ -107,10 +107,7 @@ class AgentquestEnvironment(MCPEnvironment):
         **kwargs: Any,
     ) -> AgentquestObservation:
         """
-        Handle non-MCP actions.
-
-        This environment only supports MCP actions (ListToolsAction, CallToolAction).
-        Any other action type returns an error observation.
+        Handle non-MCP actions like AgentquestAction.
 
         Args:
             action: The action to execute
@@ -118,14 +115,28 @@ class AgentquestEnvironment(MCPEnvironment):
             **kwargs: Additional arguments
 
         Returns:
-            Observation with error for unknown action types
+            AgentquestObservation with the echoed message
         """
+        if isinstance(action, AgentquestAction):
+            self._state.step_count += 1
+            message = action.message
+            length = len(message)
+            reward = length * 0.1
+
+            return AgentquestObservation(
+                echoed_message=message,
+                message_length=length,
+                done=True,
+                reward=reward,
+                metadata={"original_message": message, "step": self._state.step_count},
+            )
+
         return AgentquestObservation(
             done=False,
             reward=0.0,
             metadata={
                 "error": f"Unknown action type: {type(action).__name__}. "
-                "Use ListToolsAction or CallToolAction for MCP interactions."
+                "Use AgentquestAction, ListToolsAction, or CallToolAction."
             },
         )
 
